@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"table-separator/pkg/ods"
@@ -18,10 +19,18 @@ func main() {
 	filePath := flag.String("f", "", "(ОБЯЗАТЕЛЬНО!) Путь к файлу")
 	outDir := flag.String("o", fmt.Sprintf("files_%s", time.Now().Format("2006-01-02_15-04-05")), "Out dir name")
 	filterColumnNum := flag.Int("c", 5, "Номер колонки по которой будет фильтроваться таблица. Нумерация начинается с 0")
+	IsPrintVersion := flag.Bool("v", false, "Версия")
 	flag.Parse()
+
+	if *IsPrintVersion {
+		info, _ := debug.ReadBuildInfo()
+		fmt.Println(info.Main.Version)
+		os.Exit(0)
+	}
 
 	if *filePath == "" {
 		flag.PrintDefaults()
+		os.Exit(1)
 	}
 
 	data, err := ods.Read(*filePath)
