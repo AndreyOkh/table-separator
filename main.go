@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -26,12 +25,6 @@ func main() {
 		panic(err)
 	}
 	defer files.Close()
-
-	jData, err := json.Marshal(data)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(jData))
 
 	var title []string
 	var rows [][]string
