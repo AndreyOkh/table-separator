@@ -47,7 +47,7 @@ jobs:
 
       - name: Publish package
         run: |
-          echo "//maven.pkg.github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/:TOKEN=${{ github.token }}" > ~/.netrc
+          echo "//maven.pkg.github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/:TOKEN=${{ secrets.GITHUB_TOKEN }}" > ~/.netrc
           git tag ${{ steps.vars.outputs.version }}
           git push origin ${{ steps.vars.outputs.version }}
           go install github.com/goreleaser/goreleaser@latest
