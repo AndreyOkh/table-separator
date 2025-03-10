@@ -1,0 +1,54 @@
+name: Build and Publish Go Package
+
+on:
+  push:
+    tags:
+      - 'v*' # Запускать при создании тегов, начинающихся с 'v'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.24' # Укажите нужную версию Go
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Get dependencies
+        run: go mod tidy
+        
+      - name: Run tests
+        run: go test -v ./...
+
+      - name: Build
+        run: go build -v ./...
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.24'
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set package version
+        id: vars
+        run: echo ::set-output name=version::${GITHUB_REF#refs/tags/v}
+
+      - name: Publish package
+        run: |
+          echo "//maven.pkg.github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/:TOKEN=${{ secrets.GITHUB_TOKEN }}" > ~/.netrc
+          git tag ${{ steps.vars.outputs.version }}
+          git push origin ${{ steps.vars.outputs.version }}
+          go install github.com/goreleaser/goreleaser@latest
+          goreleaser --rm-dist --release-notes=/dev/null
