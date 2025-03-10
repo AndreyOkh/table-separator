@@ -1,3 +1,3 @@
-module report-parser
+module table-separator
 
 go 1.24

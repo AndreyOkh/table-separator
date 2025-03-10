@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"report-parser/pkg/ods"
 	"strings"
 	"sync"
+	"table-separator/pkg/ods"
 	"time"
 )
 
@@ -15,16 +15,19 @@ var wg sync.WaitGroup
 func main() {
 	t := time.Now()
 
-	filePath := flag.String("f", "test-report.ods", "Path to a file")
+	filePath := flag.String("f", "", "(ОБЯЗАТЕЛЬНО!) Путь к файлу")
 	outDir := flag.String("o", fmt.Sprintf("files_%s", time.Now().Format("2006-01-02_15-04-05")), "Out dir name")
 	filterColumnNum := flag.Int("c", 5, "Номер колонки по которой будет фильтроваться таблица. Нумерация начинается с 0")
 	flag.Parse()
 
-	data, files, err := ods.Read(*filePath)
+	if *filePath == "" {
+		flag.PrintDefaults()
+	}
+
+	data, err := ods.Read(*filePath)
 	if err != nil {
 		panic(err)
 	}
-	defer files.Close()
 
 	var title []string
 	var rows [][]string
@@ -74,6 +77,7 @@ func main() {
 		}()
 	}
 	wg.Wait()
+
 	fmt.Println(time.Since(t))
 }
 
@@ -103,7 +107,13 @@ func writeFile(rows [][]string, title []string, path, filename string) {
 	if err != nil {
 		panic(err)
 	}
-	defer outFile.Close()
+	defer func(outFile *os.File) {
+		err := outFile.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(outFile)
+
 	_, err = outFile.Write([]byte(strings.Join(dataSplit, "\n")))
 	if err != nil {
 		panic(err)
