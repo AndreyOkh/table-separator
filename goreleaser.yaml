@@ -1,0 +1,25 @@
+project_name: table-separator
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - id: table-separator
+    main: .
+    binary: table-separator
+    goos:
+      - linux
+      - windows
+    goarch:
+      - amd64
+archives:
+  - format: tar.gz
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+checksum:
+  name_template: 'checksums.txt'
+release:
+  github:
+    owner: your-github-username
+    name: your-repo-name
+  name_template: 'v{{ .Version }}'
+  draft: false
+  prerelease: auto
