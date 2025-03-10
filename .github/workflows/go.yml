@@ -47,6 +47,7 @@ jobs:
 
       - name: Publish package
         run: |
+          export GITHUB_TOKEN=${{ github.token }}
           echo "//maven.pkg.github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/:TOKEN=${{ secrets.GITHUB_TOKEN }}" > ~/.netrc
           git tag ${{ steps.vars.outputs.version }}
           git push origin ${{ steps.vars.outputs.version }}
