@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/charmbracelet/huh"
+	"log"
 	"os"
 	"runtime/debug"
 	"strings"
@@ -16,26 +18,27 @@ var wg sync.WaitGroup
 func main() {
 	t := time.Now()
 
-	filePath := flag.String("f", "", "(ОБЯЗАТЕЛЬНО!) Путь к файлу")
+	fileName := flag.String("f", "", "(ОБЯЗАТЕЛЬНО!) Путь к файлу")
 	outDir := flag.String("o", fmt.Sprintf("files_%s", time.Now().Format("2006-01-02_15-04-05")), "Out dir name")
 	filterColumnNum := flag.Int("c", 5, "Номер колонки по которой будет фильтроваться таблица. Нумерация начинается с 0")
-	IsPrintVersion := flag.Bool("v", false, "Версия")
+	flag.BoolFunc("v", "Версия", printVersion)
 	flag.Parse()
 
-	if *IsPrintVersion {
-		info, _ := debug.ReadBuildInfo()
-		fmt.Println(info.Main.Version)
-		os.Exit(0)
-	}
-
-	if *filePath == "" {
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
-	data, err := ods.Read(*filePath)
+	execPath, err := os.Getwd()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+	}
+	log.Println("execPath:", execPath)
+	if *fileName == "" {
+		err := selectFile(fileName)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	data, err := ods.Read(*fileName)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	var title []string
@@ -87,7 +90,7 @@ func main() {
 	}
 	wg.Wait()
 
-	fmt.Println(time.Since(t))
+	log.Println(time.Since(t))
 }
 
 func unique(input []string) []string {
@@ -127,4 +130,33 @@ func writeFile(rows [][]string, title []string, path, filename string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func printVersion(s string) error {
+	if s == "true" {
+		info, _ := debug.ReadBuildInfo()
+		fmt.Println(info.Main.Version)
+		os.Exit(0)
+	} else {
+		log.Fatal("Undefined ", s)
+	}
+	return nil
+}
+
+func selectFile(file *string) error {
+	err := huh.NewForm(
+		huh.NewGroup(
+			huh.NewFilePicker().
+				Height(10).
+				Picking(true).
+				Title("Table").
+				Description("Выберите таблицу в формате .ods").
+				AllowedTypes([]string{".ods"}).
+				Value(file),
+		),
+	).WithShowHelp(true).Run()
+	if err != nil {
+		return err
+	}
+	return nil
 }
